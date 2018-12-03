@@ -15,7 +15,8 @@ simulate_rb <- function(rbclass, skip = "", antithetic = FALSE) {
      
      N   <- rbclass$N            # paths
      if (antithetic) N <- N/2    # N must be even if antithetic
-     
+     if (!(N %% 1 == 0)) stop("N has to be even when using antithetics")
+
      n   <- rbclass$timegrid$n   # time steps per year 
      s   <- rbclass$timegrid$s   # time steps
      dt  <- rbclass$timegrid$dt

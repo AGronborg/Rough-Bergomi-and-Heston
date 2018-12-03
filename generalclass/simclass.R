@@ -114,12 +114,12 @@ changetimegrid <- function(simclass, TT = NULL, n = NULL, reset = FALSE) {
      if (reset == FALSE) {
           if (!is.null(simclass$simgrid)) simclass <- setsimgrid(simclass, simclass$simgrid$t, simclass$simgrid$k)
           if (!is.null(simclass$empgrid)) simclass <- setempgrid(simclass, simclass$empgrid)
-          simclass$paths <- NULL
      } else {
           simclass$simgrid    <- NULL
           simclass$empgrid    <- NULL
           simclass$calweights <- NULL
      }
+     simclass$paths <- pathsclass()
      
      return(simclass)
 }
