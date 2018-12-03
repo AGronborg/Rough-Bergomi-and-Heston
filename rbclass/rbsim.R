@@ -35,22 +35,12 @@ simulate_rb <- function(rbclass, skip = "", antithetic = FALSE) {
      }
      if (!("Y"  %in% skip)) rbclass$paths$Y   <- fY(rbclass$paths$dW11, rbclass$paths$dW12, N, s, a, n) 
      if (!("V"  %in% skip)) {
-          if (antithetic) {
-               rbclass$paths$V               <- matrix(NA, nrow = 2*N, ncol = s + 1)
-               rbclass$paths$V[1:N,]         <- fV( rbclass$paths$Y, t, a, xi, eta)
-               rbclass$paths$V[(N+1):(2*N),] <- fV(-rbclass$paths$Y, t, a, xi, eta)
-          } else {
-               rbclass$paths$V  <- fV(rbclass$paths$Y, t, a, xi, eta)
-          }
+          rbclass$paths$V  <- fV(rbclass$paths$Y, t, a, xi, eta)
+          if (antithetic) rbclass$paths$V <- rbind(rbclass$paths$V, fV(-rbclass$paths$Y, t, a, xi, eta))
      }
      if (!("S1" %in% skip)) {
-          if (antithetic) {
-               rbclass$paths$S1               <- matrix(NA, nrow = 2*N, ncol = s + 1)
-               rbclass$paths$S1[1:N,]         <- fS1(rbclass$paths$V[1:N,],          rbclass$paths$dW11, rho, dt) 
-               rbclass$paths$S1[(N+1):(2*N),] <- fS1(rbclass$paths$V[(N+1):(2*N),], -rbclass$paths$dW11, rho, dt) 
-          } else {
-               rbclass$paths$S1  <- fS1(rbclass$paths$V, rbclass$paths$dW11, rho, dt) 
-          }
+          rbclass$paths$S1  <- fS1(rbclass$paths$V[1:N,], rbclass$paths$dW11, rho, dt)
+          if (antithetic) rbclass$paths$S1 <- rbind(rbclass$paths$S1, fS1(rbclass$paths$V[(N+1):(2*N),], -rbclass$paths$dW11, rho, dt) )
      }
      
      if (!("W2" %in% skip)) rbclass$paths$dW2 <- fdW2(N, s, dt)
@@ -61,60 +51,23 @@ simulate_rb <- function(rbclass, skip = "", antithetic = FALSE) {
      return(rbclass)
 }
 
-simulate_rb_slow <- function(rbclass, skip = "", antithetic = FALSE) { 
-     # slower than simulate_rb when doing antithetics, but give all paths
-     rbclass$siminfo$starttime <- Sys.time()
-     rbclass <- setseed(rbclass)
-     
-     N   <- rbclass$N            # paths
-     if (antithetic) N <- N/2    # N must be even if antithetic
-     if (antithetic) skip <- c("W2","B","S") # Antithetic only works with mixed
-     
-     n   <- rbclass$timegrid$n   # time steps per year 
-     s   <- rbclass$timegrid$s   # time steps
-     dt  <- rbclass$timegrid$dt
-     t   <- rbclass$timegrid$t   # vector of times
-     
-     a   <- rbclass$vars$a
-     xi  <- rbclass$vars$xi
-     eta <- rbclass$vars$eta
-     rho <- rbclass$vars$rho
-     e   <- c(0,0)
-     c   <- cov_hybrid(a,n)
-     
-     if (!("W1" %in% skip)) {
-          dW1 <- fdW1(e, c, N, s)
-          if (antithetic) {
-               rbclass$paths$dW11 <- rbind(dW1[,,1],-dW1[,,1])
-               rbclass$paths$dW12 <- rbind(dW1[,,2],-dW1[,,2])
-          } else {
-               rbclass$paths$dW11 <- dW1[,,1]
-               rbclass$paths$dW12 <- dW1[,,2]
-          }
-     }
-     if (!("Y"  %in% skip))  {
-          if (antithetic) {
-               Y <- fY(rbclass$paths$dW11[1:N,], rbclass$paths$dW12[1:N,], N, s, a, n)
-               rbclass$paths$Y <- rbind(Y,-Y)
-          } else {
-               rbclass$paths$Y <- fY(rbclass$paths$dW11, rbclass$paths$dW12, N, s, a, n)
-          }
-     }
-     if (!("V"  %in% skip)) rbclass$paths$V  <- fV(rbclass$paths$Y, t, a, xi, eta)
-     if (!("S1" %in% skip)) rbclass$paths$S1 <- fS1(rbclass$paths$V, rbclass$paths$dW11, rho, dt) 
-     
-     if (!("W2" %in% skip)) rbclass$paths$dW2 <- fdW2(N, s, dt)
-     if (!("B"  %in% skip)) rbclass$paths$dB  <- fdB(rbclass$paths$dW11, rbclass$paths$dW2, rho)
-     if (!("S"  %in% skip)) rbclass$paths$S   <- fS(rbclass$paths$V, rbclass$paths$dB, dt) 
-
-     rbclass$siminfo$endtime <- Sys.time()
-     return(rbclass)
-}
-          
 simulate_rb_standard            <- function(rbclass, skip = "") simulate_rb(rbclass, skip = skip, antithetic = FALSE)
 simulate_rb_mixed               <- function(rbclass, skip = c("W2","B","S")) return(simulate_rb(rbclass, skip = skip, antithetic = FALSE))
 simulate_rb_antimixed           <- function(rbclass, skip = c("W2","B","S")) return(simulate_rb(rbclass, skip = skip, antithetic = TRUE))
-simulate_rb_antimixed_withpaths <- function(rbclass, skip = c("W2","B","S")) return(simulate_rb_slow(rbclass, skip = skip, antithetic = TRUE))
+
+simulate_rb_antimixed_withpaths <- function(rbclass, skip = c("W2","B","S")) {
+     rbclass <- simulate_rb_antimixed(rbclass, skip = skip)
+     rbclass <- rb_add_antithetic_paths(rbclass)
+     rbclass$siminfo$endtime <- Sys.time()
+     return(rbclass)
+}
+
+rb_add_antithetic_paths <- function(rbclass) {
+     rbclass$paths$dW11 <- rbind(rbclass$paths$dW11, -rbclass$paths$dW11)
+     rbclass$paths$dW12 <- rbind(rbclass$paths$dW12, -rbclass$paths$dW12)
+     rbclass$paths$Y    <- rbind(rbclass$paths$Y,    -rbclass$paths$Y)
+     return(rbclass)
+}
 
 #################
 ##### UTILS #####

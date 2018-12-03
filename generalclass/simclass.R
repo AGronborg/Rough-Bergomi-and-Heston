@@ -204,9 +204,9 @@ benchmodel <- function(simclass, t = 1, k = 0, n = NULL, times = 10, simfunc = s
 ##### PLOT #####
 ################
 
-plot.simulateclass <- function(simclass, style = c("default","both","simulation","empirical","empirical3d","simulated3d"), mfrow = TRUE, type = c("impvol","prices"), ...) {
+plot.simulateclass <- function(simclass, style = c("default","both","simulation","empirical","empirical3d","simulated3d"), mfrow = TRUE, pricetype = c("impvol","prices"), ...) {
      
-     if (match.arg(type) == "prices") {
+     if (match.arg(pricetype) == "prices") {
           if (is.null(simclass$simgrid$prices)) simclass$simgrid$prices <- getprices(simclass$simgrid)
           simclass$simgrid$impvol <- simclass$simgrid$prices
           if (is.null(simclass$empgrid$prices)) simclass$empgrid$prices <- getprices(simclass$empgrid)

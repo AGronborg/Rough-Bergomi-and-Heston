@@ -43,7 +43,7 @@ price_standard <- function(simclass) {
      return(simclass)
 }
 
-single_price <- function(simclass, t, k, n = NULL, N = NULL, varnames = NULL, values = NULL, simfunc = simulate, pricefunc = price, type = c("impvol","price"), seed = -1, ...) {
+single_price <- function(simclass, t, k, n = NULL, N = NULL, varnames = NULL, values = NULL, simfunc = simulate, pricefunc = price, pricetype = c("impvol","price"), seed = -1, ...) {
      if (is.null(n) && !is.null(timegrid)) n <- simclass$n
      else if (is.null(n)) n <- simclass$timegrid$n
      
@@ -52,8 +52,8 @@ single_price <- function(simclass, t, k, n = NULL, N = NULL, varnames = NULL, va
      simclass <- setsimgrid(simclass, t = t, k = k)
      simclass <- simfunc(simclass)
      simclass <- pricefunc(simclass)
-     if (match.arg(type) == "impvol") return(simclass$simgrid$impvol[1,1])
-     else if (match.arg(type) == "price") {
+     if (match.arg(pricetype) == "impvol") return(simclass$simgrid$impvol[1,1])
+     else if (match.arg(pricetype) == "price") {
           if (!is.null(simclass$simgrid$prices)) return(simclass$simgrid$prices[1,1])
           else return(bs(Fwd = 1, K = exp(k), V = ceiling(n*t)/n*simclass$simgrid$impvol[1,1]^2))
      }

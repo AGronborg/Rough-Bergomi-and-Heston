@@ -29,11 +29,11 @@ calibrate_rb_mixed <- function(simclass, plottrace = FALSE, trackpars = FALSE, m
           if (is.null(simclass$simgrid$prices) && minimize == "prices") simclass$simgrid$prices <- getprices(simclass$simgrid)
 
           sim <- getsmiles(simclass$simgrid, simclass$empgrid$t, simclass$empgrid$k, minimize)
-          emp <- getsmiles(simclass$empgrid, type = minimize)
+          emp <- getsmiles(simclass$empgrid, pricetype = minimize)
 
           se <- sum((sim-emp)^2*simclass$calweights)
           
-          if (plottrace) plot(simclass, type = minimize)
+          if (plottrace) plot(simclass, pricetype = minimize)
           if (trackpars) print(c(vars,se))
           
           return(se)

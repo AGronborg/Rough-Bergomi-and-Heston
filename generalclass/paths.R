@@ -27,22 +27,19 @@ deletepaths.simulateclass <- function(simclass) {
 ##### PLOT #####
 ################
 
-plot.matrix <- function(mat, paths = 1:2, ...) {
+plot.matrix <- function(mat, paths = 1:2, type = "l", ylim = c(min(mat[paths,]),max(mat[paths,])), makeplot = TRUE, col = NULL, ...) {
 
-     ymin  <- min(mat[paths,])
-     ymax  <- max(mat[paths,])
-     
      plotfunc <- function(i) {
-          if (i == 1) plot(1:ncol(mat), mat[paths[i],], type = "l", col = i, ylim = c(ymin,ymax), ...)   
-          else lines(1:ncol(mat), mat[paths[i],], type = "l", col = i)
+          if (i == 1 && makeplot) plot(1:ncol(mat), mat[paths[i],], type = type, col = ifelse(is.null(col),i,col), ylim = ylim, ...)   
+          else lines(1:ncol(mat), mat[paths[i],], type = type, col = ifelse(is.null(col),i,col))
      }
      
      noreturn <- sapply(1:length(paths), plotfunc)
 }
 
-plot.pathsclass <- function(pclass, variables = NULL, paths = 1:2, mfrow = TRUE, ...) {
+plot.pathsclass <- function(pclass, variables = NULL, paths = 1:2, mfrow = TRUE, main = NULL, ...) {
      if (is.null(variables)) variables <- names(pclass)
      if (mfrow) par(mfrow = getmfrow(length(variables)))
-     plotfunc <- function(var) plot(pclass[[var]], paths = paths, main = var)
+     plotfunc <- function(var) plot(pclass[[var]], paths = paths, main = ifelse(is.null(main),var,main), ...)
      noreturn <- sapply(variables, plotfunc)
 }

@@ -67,9 +67,9 @@ subset.volatilitygrid <- function(volgrid, t = NULL, k = NULL) {
      return(volgrid)
 }
 
-getsmiles <- function(volgrid, t = NULL, k = NULL, type = c("impvol","prices")) {
-     if (match.arg(type) == "impvol") return(subset(volgrid, t, k)$impvol)
-     else if (match.arg(type) == "prices") return(subset(volgrid, t, k)$prices)
+getsmiles <- function(volgrid, t = NULL, k = NULL, pricetype = c("impvol","prices")) {
+     if (match.arg(pricetype) == "impvol") return(subset(volgrid, t, k)$impvol)
+     else if (match.arg(pricetype) == "prices") return(subset(volgrid, t, k)$prices)
 }
 
 align_grid <- function(volgrid1,volgrid2) {
@@ -94,9 +94,9 @@ plot.volatilitygrid <- function(volgrid, t = NULL, plot3d = FALSE, ...) {
      else volgrid_multiplot(volgrid, t, ...)
 }
 
-volgrid_multiplot <- function(volgrid, t = NULL, mfrow = TRUE, type = c("impvol","prices"), ...) {
+volgrid_multiplot <- function(volgrid, t = NULL, mfrow = TRUE, pricetype = c("impvol","prices"), ...) {
      
-     if (match.arg(type) == "prices") {
+     if (match.arg(pricetype) == "prices") {
                if (is.null(volgrid$prices)) volgrid$prices <- getprices(volgrid)
                volgrid$impvol <- volgrid$prices
      }
@@ -109,9 +109,9 @@ volgrid_multiplot <- function(volgrid, t = NULL, mfrow = TRUE, type = c("impvol"
      for (i in s) plot(x = volgrid$k, y = volgrid$impvol[,i], xlab = "k", ylab = "impvol", main = paste("T = ", volgrid$t[i]), ...)
 }
 
-plotmultiplevolgrids <- function(volgridlist, mfrow = TRUE, type = c("impvol","prices")) {
+plotmultiplevolgrids <- function(volgridlist, mfrow = TRUE, pricetype = c("impvol","prices")) {
      
-     if (match.arg(type) == "prices") {
+     if (match.arg(pricetype) == "prices") {
           for (i in 1:length(volgridlist)) {
                if (is.null(volgridlist[[i]]$prices)) volgridlist[[i]]$prices <- getprices(volgridlist[[i]])
                volgridlist[[i]]$impvol <- volgridlist[[i]]$prices
