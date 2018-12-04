@@ -96,14 +96,12 @@ cov_hybrid <- function(a, n) {
 #################
 
 ##### dW1 #####
-fdW1 <- function(e, c, N, s) {
-     paths <- array(data = NA, dim = c(N,s,2)) # (N,s,W)
+fdW1 <- function(mu, Sigma, N, s) {
+     dW <- array(data = NA, dim = c(N,s,length(mu))) # (N,s,W)
      
-     for (i in 1:N) {
-          paths[i,,]  <- mvrnorm(n = s, mu = e, Sigma = c)
-     }
+     for (i in 1:N) dW[i,,]  <- mvrnorm(n = s, mu = mu, Sigma = Sigma)
      
-     return(paths)
+     return(dW)
 }
 
 ##### Y #####
@@ -135,6 +133,10 @@ fY <- function(dW11, dW12, N, s, a, n) {
      Y <- sqrt(2*a + 1) * (Y1+Y2)
      
      return(Y)
+}
+
+fY_exact <- function() {
+     
 }
 
 ##### dW2 #####
@@ -187,57 +189,3 @@ fS1 <- function(V, dW11, rho, dt, S0 = 1) {
      
      return(S)
 }
-
-##########################################
-##### ALTERNATIVE ANTITHETIC VERSION #####
-##########################################
-# 
-# simulate_rb <- function(rbclass, skip = "", antithetic = FALSE) {
-#      
-#      rbclass <- setseed(rbclass)
-#      
-#      N   <- rbclass$N            # paths
-#      if (antithetic) N <- N/2    # N must be even if antithetic
-#      if (antithetic) skip <- c("W2","B","S") # Antithetic only works with mixed
-#      
-#      n   <- rbclass$timegrid$n   # time steps per year 
-#      s   <- rbclass$timegrid$s   # time steps
-#      dt  <- rbclass$timegrid$dt
-#      t   <- rbclass$timegrid$t   # vector of times
-#      
-#      a   <- rbclass$vars$a
-#      xi  <- rbclass$vars$xi
-#      eta <- rbclass$vars$eta
-#      rho <- rbclass$vars$rho
-#      e   <- c(0,0)
-#      c   <- cov_hybrid(a,n)
-#      
-#      rbclass$siminfo$starttime <- Sys.time()
-#      if (!("W1" %in% skip)) {
-#           dW1 <- fdW1(e, c, N, s)
-#           if (antithetic) {
-#                rbclass$paths$dW11 <- rbind(dW1[,,1],-dW1[,,1])
-#                rbclass$paths$dW12 <- rbind(dW1[,,2],-dW1[,,2])
-#           } else {
-#                rbclass$paths$dW11 <- dW1[,,1]
-#                rbclass$paths$dW12 <- dW1[,,2]
-#           }
-#      }
-#      if (!("Y"  %in% skip))  {
-#           if (antithetic) {
-#                Y <- fY(rbclass$paths$dW11[1:N,], rbclass$paths$dW12[1:N,], N, s, a, n)
-#                rbclass$paths$Y <- rbind(Y,-Y)
-#           } else {
-#                rbclass$paths$Y <- fY(rbclass$paths$dW11, rbclass$paths$dW12, N, s, a, n)
-#           }
-#      }
-#      if (!("V"  %in% skip)) rbclass$paths$V  <- fV(rbclass$paths$Y, t, a, xi, eta)
-#      if (!("S1" %in% skip)) rbclass$paths$S1 <- fS1(rbclass$paths$V, rbclass$paths$dW11, rho, dt) 
-#      
-#      if (!("W2" %in% skip)) rbclass$paths$dW2 <- fdW2(N, s, dt)
-#      if (!("B"  %in% skip)) rbclass$paths$dB  <- fdB(rbclass$paths$dW11, rbclass$paths$dW2, rho)
-#      if (!("S"  %in% skip)) rbclass$paths$S   <- fS(rbclass$paths$V, rbclass$paths$dB, dt) 
-#      rbclass$siminfo$endtime <- Sys.time()
-#      
-#      return(rbclass)
-# }
