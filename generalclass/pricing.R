@@ -16,24 +16,26 @@ price.simulateclass <- function(...) price_standard(...)
 ##########################
 
 price_standard <- function(simclass) {
+
      simclass$priceinfo$starttime <- Sys.time()
      ##### Local variables #####
      K    <- exp(simclass$simgrid$k) # strikes
-     t    <- simclass$simgrid$t      # option price times
-     s    <- simclass$simgrid$s      # t[s] is option price times
+     ot   <- simclass$simgrid$t # option price times
+     steps<- simclass$simgrid$s # t[steps] = ot is option price times
      
      ##### Base estimator #####
-     prices <- matrix(data = NA, nrow = length(K), ncol = length(s))
-     impvol <- matrix(data = NA, nrow = length(K), ncol = length(s))
+     prices <- matrix(data = NA, nrow = length(K), ncol = length(steps))
+     impvol <- matrix(data = NA, nrow = length(K), ncol = length(steps))
      
-     for (j in 1:length(s)) {
-          Sj             <- simclass$paths$S[,s[j]]
+     for (j in 1:length(steps)) {
+          Sj             <- simclass$paths$S[,steps[j]]
           diff           <- t( sapply(Sj, function(x) x-K) )
           payoffs        <- pmax(diff, 0)
           
-          if (length(t) == 1) prices[,j] <- mean(payoffs)
-          else if (length(t) > 1) prices[,j] <- apply(payoffs, 2, mean)
-          impvol[,j]     <- vec_bsinv(P = prices[,j], Fwd = 1, K = K, TT = t[j])
+          if (length(K) == 1) prices[,j] <- mean(payoffs)
+          else                prices[,j] <- apply(payoffs, 2, mean)
+
+          impvol[,j]     <- vec_bsinv(P = prices[,j], Fwd = 1, K = K, TT = ot[j])
      }
      
      simclass$simgrid$prices   <- prices

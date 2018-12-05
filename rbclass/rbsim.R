@@ -9,7 +9,7 @@ library(MASS)   # mvrnorm
 ##### SIMULATE #####
 ####################
 
-simulate_rb <- function(rbclass, skip = "", antithetic = FALSE) {
+simulate_rb <- function(rbclass, skip = "", antithetic = FALSE, exact = FALSE) {
      rbclass$siminfo$starttime <- Sys.time()
      rbclass <- setseed(rbclass)
      
@@ -34,7 +34,7 @@ simulate_rb <- function(rbclass, skip = "", antithetic = FALSE) {
           rbclass$paths$dW11 <- dW1[,,1]
           rbclass$paths$dW12 <- dW1[,,2]
      }
-     if (!("Y"  %in% skip)) rbclass$paths$Y   <- fY(rbclass$paths$dW11, rbclass$paths$dW12, N, s, a, n) 
+     if (!("Y"  %in% skip)) rbclass$paths$Y <- fY(rbclass$paths$dW11, rbclass$paths$dW12, N, s, a, n)
      if (!("V"  %in% skip)) {
           rbclass$paths$V  <- fV(rbclass$paths$Y, t, a, xi, eta)
           if (antithetic) rbclass$paths$V <- rbind(rbclass$paths$V, fV(-rbclass$paths$Y, t, a, xi, eta))
@@ -46,15 +46,22 @@ simulate_rb <- function(rbclass, skip = "", antithetic = FALSE) {
      
      if (!("W2" %in% skip)) rbclass$paths$dW2 <- fdW2(N, s, dt)
      if (!("B"  %in% skip)) rbclass$paths$dB  <- fdB(rbclass$paths$dW11, rbclass$paths$dW2, rho)
+     if (exact) {
+          joint            <- sim_bm_volterra(a + 0.5, rho, n, s/n, N)
+          rbclass$paths$Y  <- joint$volterra
+          rbclass$paths$dB <- t(diff(t(joint$bm)))
+          rbclass$paths$V  <- fV(rbclass$paths$Y, t, a, xi, eta)
+     }
      if (!("S"  %in% skip)) rbclass$paths$S   <- fS(rbclass$paths$V, rbclass$paths$dB, dt) 
      
      rbclass$siminfo$endtime <- Sys.time()
      return(rbclass)
 }
 
-simulate_rb_standard            <- function(rbclass, skip = "") simulate_rb(rbclass, skip = skip, antithetic = FALSE)
-simulate_rb_mixed               <- function(rbclass, skip = c("W2","B","S")) return(simulate_rb(rbclass, skip = skip, antithetic = FALSE))
-simulate_rb_antimixed           <- function(rbclass, skip = c("W2","B","S")) return(simulate_rb(rbclass, skip = skip, antithetic = TRUE))
+simulate_rb_exact     <- function(rbclass, skip = c("W1", "W2", "B", "Y", "V", "S1")) simulate_rb(rbclass, skip = skip, antithetic = FALSE, exact = TRUE)
+simulate_rb_standard  <- function(rbclass, skip = "S1") simulate_rb(rbclass, skip = skip, antithetic = FALSE, exact = FALSE)
+simulate_rb_mixed     <- function(rbclass, skip = c("W2","B","S")) simulate_rb(rbclass, skip = skip, antithetic = FALSE, exact = FALSE)
+simulate_rb_antimixed <- function(rbclass, skip = c("W2","B","S")) simulate_rb(rbclass, skip = skip, antithetic = TRUE, exact = FALSE)
 
 simulate_rb_antimixed_withpaths <- function(rbclass, skip = c("W2","B","S")) {
      rbclass <- simulate_rb_antimixed(rbclass, skip = skip)
@@ -133,10 +140,6 @@ fY <- function(dW11, dW12, N, s, a, n) {
      Y <- sqrt(2*a + 1) * (Y1+Y2)
      
      return(Y)
-}
-
-fY_exact <- function() {
-     
 }
 
 ##### dW2 #####

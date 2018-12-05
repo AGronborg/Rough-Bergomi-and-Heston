@@ -2,8 +2,8 @@
 ### IMPORTS & LIBRARIES ###
 ###########################
 
-library(MASS)   # mvrnorm
-library(Matrix) # chol
+library(MASS)     # mvrnorm
+library(Matrix)   # chol
 library(hypergeo) # hypergeo
 
 ####################
@@ -85,9 +85,9 @@ simfbm <- function(H, n, TT = 1, N = 1) simfbm_cholesky(H, n, TT, N)
 ##### VOLTERRA #####
 G <- function(x, H) {
      gamma <- 0.5 - H
-     2*H*integrate(f = function(s) 1/((1-s)^gamma*(x-s)^gamma), lower = 0, upper = 1)$value
-     # slower alternative:
-     # Re( (1-2*gamma)/(1-gamma) * x^(-gamma) * hypergeo(1, gamma, 2 - gamma, 1/x) )
+     Re( (1-2*gamma)/(1-gamma) * x^(-gamma) * hypergeo(1, gamma, 2 - gamma, 1/x) )
+     # Alternative (need high subdivision to be precise):
+     # 2*H*integrate(f = function(s) 1/((1-s)^gamma*(x-s)^gamma), lower = 0, upper = 1, subdivisions = 10000)$value
 }
 
 cov_volterra <- function(s, t, H) {
@@ -97,8 +97,19 @@ cov_bm <- function(s, t) min(s,t)
 
 cov_bm_volterra <- function(bm_t, volterra_t, H, rho) {
      DH <- sqrt(2*H)/(H+0.5)
-     rho*DH*(volterra_t^(H+0.5)-(volterra_t-min(volterra_t-bm_t))^(H+0.5))
+     rho*DH*( volterra_t^(H+0.5) - (volterra_t-min(volterra_t,bm_t))^(H+0.5) )
 }
+
+# cov_bm_volterra <- function(bm_t, volterra_t, H, rho) {
+#      DH <- sqrt(2*H)/(H+0.5)
+#      rho*DH*(bm_t^(H+0.5)-(volterra_t-min(volterra_t,bm_t))^(H+0.5))
+# }
+# 
+# cov_bm_volterra <- function(u, v, H, rho) {
+#      DH <- sqrt(2*H)/(H+0.5)
+#      if (v > u) return(rho*DH*(v^(H+0.5)-(v-min(v-u))^(H+0.5)))
+#      else return(rho*DH*u^(H+0.5))
+# }
 
 covmat_volterra <- function(H, n, TT = 1) {
      s  <- ceiling(n*TT)      # time steps total
@@ -124,7 +135,7 @@ covmat_bm_volterra <- function(H, rho, n, TT = 1) {
      t  <- cumsum(rep(dt, s)) # time step sequence
      
      Sigma <- matrix(data = NA, nrow = 2*s, ncol = 2*s)
-     
+
      for (i in 1:s) {
           for (j in i:s) {
                Sigma[i,j] <- Sigma[j,i] <- cov_bm(t[i], t[j])
@@ -165,7 +176,7 @@ sim_volterra <- function(H, n, TT = 1, N = 1) sim_volterra_cholesky(H, n, TT, N)
 
 sim_bm_volterra_cholesky <- function(H, rho, n, TT = 1, N = 1) {
      s     <- ceiling(n*TT)
-     
+
      Sigma <- covmat_bm_volterra(H, rho, n, TT)
      L     <- t(chol(Sigma))
      dW    <- matrix(rnorm(2*s*N), nrow = N, ncol = 2*s)
@@ -183,7 +194,7 @@ sim_bm_volterra_cholesky <- function(H, rho, n, TT = 1, N = 1) {
 sim_bm_volterra_eigen <- function(H, rho, n, TT = 1, N = 1) {
      s     <- ceiling(n*TT)
      Sigma <- covmat_bm_volterra(H, rho, n, TT)
-     joint   <- mvrnorm(n = N, mu = rep(0,2*s), Sigma = Sigma)
+     joint <- mvrnorm(n = N, mu = rep(0,2*s), Sigma = Sigma)
      
      if (N == 1) bm <- add0(joint[1:s])
      else        bm <- add0(joint[,1:s]) 
@@ -195,3 +206,4 @@ sim_bm_volterra_eigen <- function(H, rho, n, TT = 1, N = 1) {
 }
 
 sim_bm_volterra <- function(H, rho, n, TT = 1, N = 1) sim_bm_volterra_cholesky(H, rho, n, TT, N) 
+
