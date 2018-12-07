@@ -43,7 +43,7 @@ simcordW <- function(rho, N, s, dt = 1) {
 
 ##### fBm #####
 cov_fbm <- function(s, t, H) {
-     0.5*(abs(t)^(2*H)+abs(s)^(2*H)-abs(t-s)^(2*H))
+     0.5*(t^(2*H)+s^(2*H)-abs(t-s)^(2*H))
 }
 
 covmat_fbm <- function(H, n, TT = 1) {

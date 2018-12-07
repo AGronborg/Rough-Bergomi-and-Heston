@@ -105,9 +105,17 @@ calibrate.calovertimeclass <- function(cotclass, skipfirst = FALSE, delpaths = T
 }
 
 caltime.calovertimeclass <- function(cotclass, units = "secs", digits = 0) {
-     caltime <- as.numeric(difftime(cotclass$info$calendtime,cotclass$info$calstarttime, units = units))
-     firstcaltime <- as.numeric(difftime(cotclass$info$firstcalendtime,cotclass$info$firstcalstarttime, units = units))
-     return(round(firstcaltime+caltime, digits = digits))
+     round(sum( sapply(cotclass$simclasses, caltime, units = units) ), digits = digits)
+     #caltime <- as.numeric(difftime(cotclass$info$calendtime,cotclass$info$calstarttime, units = units))
+     #firstcaltime <- as.numeric(difftime(cotclass$info$firstcalendtime,cotclass$info$firstcalstarttime, units = units))
+     #return(round(firstcaltime+caltime, digits = digits))
+}
+
+caltimes <- function(cotclass, units = "secs", digits = 0) {
+     caltimes <- matrix(sapply(cotclass$simclasses, caltime, units = units), ncol = 1)
+     colnames(caltimes) <- units
+     rownames(caltimes) <- showdates(cotclass$dates)
+     return(caltimes)
 }
 
 ##################
@@ -135,11 +143,14 @@ xtable_h_rb <- function(hcotclass, rbcotclass, pars = rep(2, 9), dates = 1:hcotc
 ###################
 
 summary.calovertimeclass <- function(cotclass) {
-     vars <- pround(getvars(cotclass))
-     errors <- pround(sapply(cotclass$simclasses, function(x) x$calinfo$op$value))
+     vars     <- pround(getvars(cotclass))
      
-     vars <- cbind(vars, errors)
-     colnames(vars)[ncol(vars)] <- "errors"
+     errors   <- pround(sapply(cotclass$simclasses, function(x) x$calinfo$op$value))
+     vars     <- cbind(vars, errors)
+     colnames(vars)[ncol(vars)] <- "sse"
+     
+     ctimes   <- caltimes(cotclass)
+     vars     <- cbind(vars, ctimes)
      
      return(vars)
 }
