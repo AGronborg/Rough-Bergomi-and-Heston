@@ -10,7 +10,7 @@ source("hestonclass/hestonpricing.R")
 ### CLASS ###
 #############
 
-hestonclass <- function(n = 100, N = 1000, TT = NULL, lambda = 1, vbar = 0.2, v0 = 0.2, eta = 0.2, rho = 0, seed = 0) {
+hestonclass <- function(n = 100, N = 1000, TT = NULL, lambda = 0.2, vbar = 0.3^2, v0 = 0.2^2, eta = 0.02, rho = 0, seed = 0) {
      
      hclass <- simulateclass(n = n, N = N, TT = TT, seed = seed)
      class(hclass) <- c("hestonclass","simulateclass")

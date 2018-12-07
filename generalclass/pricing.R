@@ -45,31 +45,27 @@ price_standard <- function(simclass) {
      return(simclass)
 }
 
-single_price <- function(simclass, t, k, n = NULL, N = NULL, varnames = NULL, values = NULL, simfunc = simulate, pricefunc = price, pricetype = c("impvol","price"), seed = -1, ...) {
+fastprice <- function(simclass, t, k, n = NULL, N = NULL, varnames = NULL, values = NULL, simfunc = simulate, pricefunc = price, pricetype = c("impvol","price"), seed = -1, ...) {
      if (is.null(n) && !is.null(timegrid)) n <- simclass$n
      else if (is.null(n)) n <- simclass$timegrid$n
      
      simclass <- setvars(simclass, names = varnames, values = values, N = N, seed = seed, ...)
-     simclass <- changetimegrid(simclass, TT = t, n = n, reset = TRUE)
+     simclass <- changetimegrid(simclass, TT = max(t), n = n, reset = TRUE)
      simclass <- setsimgrid(simclass, t = t, k = k)
      simclass <- simfunc(simclass)
      simclass <- pricefunc(simclass)
-     if (match.arg(pricetype) == "impvol") return(simclass$simgrid$impvol[1,1])
+     if (match.arg(pricetype) == "impvol") return(simclass$simgrid$impvol)
      else if (match.arg(pricetype) == "price") {
-          if (!is.null(simclass$simgrid$prices)) return(simclass$simgrid$prices[1,1])
-          else return(bs(Fwd = 1, K = exp(k), V = ceiling(n*t)/n*simclass$simgrid$impvol[1,1]^2))
+          if (!is.null(simclass$simgrid$prices)) return(simclass$simgrid$prices)
+          else return(getprices(simclass$simgrid))
      }
 }
 
-single_price_vec <- function(simclass, t, k, n = NULL, N = NULL, ...) {
-     
-     if (is.null(n)) n <- simclass$timegrid$n
-     if (is.null(N)) N <- simclass$N
-     
-     prevecfunc <- function(t, k, n, N) single_price(simclass = simclass, t = t, k = k, n = n, N = N, ...)
-     vecfunc <- Vectorize(prevecfunc)
-     vecfunc(t, k, n, N)
-}
+pricerb     <- function(t, k, a, rho, eta, xi, n = 1000, N = 10000, pricetype = "impvol", simfunc = simulate_rb_antimixed, pricefunc = price_rb_mixed, ...) 
+     fastprice(roughbergomiclass(), t, k, a = a, rho = rho, eta = eta, xi = xi, pricetype = pricetype, n = n, N = N, simfunc = simfunc, pricefunc = pricefunc, ...)
+
+priceheston <- function(t, k, lambda, vbar, v0, eta, rho, pricetype = "impvol", n = 100, N = 10000, simfunc = identity, pricefunc = price_heston_closedform_lipton, ...) 
+     fastprice(hestonclass(), t, k, lambda = lambda, vbar = vbar, v0 = v0, eta = eta, rho = rho, pricetype = pricetype, n = n, N = N, simfunc = simfunc, pricefunc = pricefunc, ...)
 
 pricetime <- function(object, ...) UseMethod("pricetime", object)
 pricetime.simulateclass <- function(simclass, units = "auto", digits = 0) gettime(simclass$priceinfo, units, digits)

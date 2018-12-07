@@ -11,7 +11,7 @@ source("rbclass/rbcalibrate.R")
 ### CLASS ###
 #############
 
-roughbergomiclass <- function(n = 100, N = 1000, TT = NULL, a = -0.43, rho = -0.9, eta = 0.3, xi = 0.06, seed = 0) {
+roughbergomiclass <- function(n = 100, N = 1000, TT = NULL, a = -0.43, rho = -0.9, eta = 1.9, xi = 0.235^2, seed = 0) {
      
      rbclass        <- simulateclass(n = n, N = N, TT = TT, seed = seed)
      class(rbclass) <- c("roughbergomiclass","simulateclass")
