@@ -37,7 +37,7 @@ monotonize <- function(t) {
 }
 
 align <- function(t1, t2) {
-     if (!all(is.in(t1,t2))) warning("t1 has been rounded off")
+     # if (!all(is.in(t1,t2))) warning("t1 has been rounded off")
      monotonize( t2[which.closest(t1,t2)] )
 }
 

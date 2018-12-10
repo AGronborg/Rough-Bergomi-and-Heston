@@ -3,13 +3,25 @@
 ##############################$
 
 ### IMPORTS ###
-source("generalclass/empirical.R")
-source("rbclass/rbclass.R")
-source("hestonclass/hestonclass.R")
-source("calovertime/calovertimeclass.R")
+source("thesislib.R")
 
 ### OPTIONS ###
 par(mar=c(2,2,1,0.5)) # bot, left, top, right
+par(mfrow=c(3,2))
+
+####################$
+##### PROCESSES #####
+####################$
+
+TT <- 3; n  <- 100; H <- 0.2
+
+plot(sim_bm             (n = n, TT = TT),                   type = "l")
+plot(sim_fbm            (n = n, TT = TT, H = H),            type = "l")
+plot(sim_volterra       (n = n, TT = TT, H = H),            type = "l")
+plot(sim_volterra_hybrid(n = n, TT = TT, H = H, kappa = 3), type = "l")
+
+paths <- sim_bm_volterra (n = n, TT = TT, H = H, rho = -0.9)
+plot(rbind(paths$bm,paths$volterra))
 
 ##################$
 ##### PRICING #####
@@ -61,7 +73,7 @@ plot(hcotclass, ylim = c(0,0.6))
 
 ### ROUGH BERGOMI (MIXED) ###
 rbclass                    <- roughbergomiclass(n = 500, N = 5000, seed = 123)
-simulate.roughbergomiclass <- function(...) simulate_rb_mixed(...)
+simulate.roughbergomiclass <- function(...) simulate_rb_antimixed(...)
 price.roughbergomiclass    <- function(...) price_rb_mixed(...)
 calibrate.roughbergomiclass<- function(...) calibrate_rb_mixed(...)
 

@@ -38,7 +38,7 @@ plot.matrix <- function(mat, paths = 1:2, type = "l", ylim = c(min(mat[paths,]),
 }
 
 plot.pathsclass <- function(pclass, variables = NULL, paths = 1:2, mfrow = TRUE, main = NULL, ...) {
-     if (is.null(variables)) variables <- names(pclass)
+     if (is.null(variables)) variables <- names(pclass)[sapply(pclass, is.matrix)]
      if (mfrow) par(mfrow = getmfrow(length(variables)))
      plotfunc <- function(var) plot(pclass[[var]], paths = paths, main = ifelse(is.null(main),var,main), ...)
      noreturn <- sapply(variables, plotfunc)
