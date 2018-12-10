@@ -15,10 +15,11 @@ par(mfrow=c(3,2))
 
 TT <- 3; n  <- 100; H <- 0.2
 
-plot(sim_bm             (n = n, TT = TT),                   type = "l")
-plot(sim_fbm            (n = n, TT = TT, H = H),            type = "l")
-plot(sim_volterra       (n = n, TT = TT, H = H),            type = "l")
-plot(sim_volterra_hybrid(n = n, TT = TT, H = H, kappa = 3), type = "l")
+plot(sim_bm             (n = n, TT = TT),                                  type = "l")
+plot(sim_fbm            (n = n, TT = TT, H = H),                           type = "l")
+plot(sim_volterra       (n = n, TT = TT, H = H),                           type = "l")
+plot(sim_volterra_hybrid(n = n, TT = TT, H = H, kappa = 0, b = "fwd"),     type = "l")
+plot(sim_volterra_hybrid(n = n, TT = TT, H = H, kappa = 3, b = "optimal"), type = "l")
 
 paths <- sim_bm_volterra (n = n, TT = TT, H = H, rho = -0.9)
 plot(rbind(paths$bm,paths$volterra))

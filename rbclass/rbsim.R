@@ -10,7 +10,7 @@ library(hypergeo) # hypergeo
 ##### SIMULATE #####
 ####################
 
-simulate_rb <- function(rbclass, skip = "", antithetic = FALSE, exact = FALSE, kappa = 1) {
+simulate_rb <- function(rbclass, skip = "", antithetic = FALSE, exact = FALSE, kappa = 1, b = "optimal") {
      rbclass$siminfo$starttime <- Sys.time()
      rbclass <- setseed(rbclass)
      
@@ -36,7 +36,7 @@ simulate_rb <- function(rbclass, skip = "", antithetic = FALSE, exact = FALSE, k
           rbclass$paths$dW11 <- dW1[,,1]
           rbclass$paths$dW12 <- dW1[,,-1,drop=FALSE]
      }
-     if (!("Y"  %in% skip)) rbclass$paths$Y <- fY(rbclass$paths$dW11, rbclass$paths$dW12, N, s, a, n, kappa)
+     if (!("Y"  %in% skip)) rbclass$paths$Y <- fY(rbclass$paths$dW11, rbclass$paths$dW12, N, s, a, n, kappa, b)
      if (!("V"  %in% skip)) {
           rbclass$paths$V  <- fV(rbclass$paths$Y, t, a, xi, eta)
           if (antithetic) rbclass$paths$V <- rbind(rbclass$paths$V, fV(-rbclass$paths$Y, t, a, xi, eta))
@@ -84,12 +84,10 @@ rb_add_antithetic_paths <- function(rbclass) {
 #################
 
 ##### Kernel #####
-g <- function(x,a) (x^a)
 g_kernel <- function(x,a) (x^a)
 g_kernel <- Vectorize(g_kernel)
 
 ##### Discretization (minimising hybrid scheme error) #####
-b <- function(k,a) ((k^(a+1)-(k-1)^(a+1))/(a+1))^(1/a)
 b_weights <- function(k,a) ((k^(a+1)-(k-1)^(a+1))/(a+1))^(1/a)
 b_weights <- Vectorize(b_weights)
 
@@ -97,6 +95,7 @@ b_weights <- Vectorize(b_weights)
 cov_hybrid <- function(a, n, kappa = 1) {
      cov <- matrix(NA, kappa + 1, kappa + 1)
      cov[1,1] <- 1/n
+     if (kappa == 0) return(cov)
      
      for (j in 2:(kappa + 1))
           cov[1,j] <- cov[j,1] <- ((j-1)^(a+1)-(j-2)^(a+1))/((a+1)*n^(a+1))
@@ -116,8 +115,6 @@ cov_hybrid <- function(a, n, kappa = 1) {
      return(Re(cov))
 }
 
-cov_hybrid(-0.43, 10, 2)
-
 #################
 ##### PATHS #####
 #################
@@ -130,20 +127,21 @@ fdW1 <- function(mu, Sigma, N, s) {
 }
 
 ##### Y #####
-fY <- function(dW11, dW12, N, s, a, n, kappa = 1) {
+fY <- function(dW11, dW12, N, s, a, n, kappa = 1, b = c("optimal","fwd")) {
 
      Y <- NULL
      if (N == 1) {
-          Y1 <- c(0, dW12[,,1])
+          if (kappa >= 1) Y1 <- c(0, dW12[,,1])
           if (kappa > 1) for (k in 2:kappa) Y1 <- Y1 + c(rep(0,k),dW12[,-((s+2-k):s),k])
      } else {
-          Y1 <- cbind(0,dW12[,,1]) # Exact integrals
+          if (kappa >= 1) Y1 <- cbind(0,dW12[,,1]) # Exact integrals
           if (kappa > 1) for (k in 2:kappa) Y1 <- Y1 + cbind(matrix(0, nrow = N, ncol = k),dW12[,-((s+2-k):s),k])
      }
      
      # Arrays for convolution
      Gamma <- rep(0,s + 1) # Gamma
-     for (k in (kappa+1):s) Gamma[k+1] <- g_kernel( b_weights(k,a)/n, a )
+     if (match.arg(b) == "optimal") for (k in (kappa+1):s) Gamma[k+1] <- g_kernel( b_weights(k,a)/n, a )
+     else for (k in (kappa+1):s) Gamma[k+1] <- g_kernel( k/n, a )
      
      Xi <- dW11 # Xi
      if (N == 1) Xi <- t(as.matrix(Xi))
@@ -154,9 +152,8 @@ fY <- function(dW11, dW12, N, s, a, n, kappa = 1) {
      
      Y2 <- GX[,1:(1+s)] # Riemann sums
      
-     Y <- sqrt(2*a + 1) * (Y1+Y2)
-     
-     return(Y)
+     if (kappa >= 1) return( sqrt(2*a + 1) * (Y1+Y2) )
+     else return( sqrt(2*a + 1) * Y2 )
 }
 
 ##### dW2 #####
@@ -321,13 +318,13 @@ sim_volterra <- function(H, n, TT = 1, N = 1) {
      add0(volterra)
 }
 
-sim_volterra_hybrid  <- function(H, n, TT = 1, N = 1, kappa = 1) {
+sim_volterra_hybrid  <- function(H, n, TT = 1, N = 1, kappa = 1, b = "optimal") {
      s   <- ceiling(n*TT)
      a   <- H - 0.5
      e   <- rep(0,kappa+1)
      c   <- cov_hybrid(a,n,kappa)
      
      dW1 <- fdW1(e, c, N, s)
-     fY(dW1[,,1], dW1[,,-1,drop=FALSE], N, s, a, n, kappa)
+     fY(dW1[,,1], dW1[,,-1,drop=FALSE], N, s, a, n, kappa, b)
 }
 
