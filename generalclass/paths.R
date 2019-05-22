@@ -27,11 +27,12 @@ deletepaths.simulateclass <- function(simclass) {
 ##### PLOT #####
 ################
 
-plot.matrix <- function(mat, paths = 1:2, type = "l", ylim = c(min(mat[paths,]),max(mat[paths,])), makeplot = TRUE, col = NULL, ...) {
+plot.matrix <- function(mat, xvalues = 1:ncol(mat), paths = 1:2, type = "l", ylim = c(min(mat[paths,]),max(mat[paths,])), makeplot = TRUE, col = NULL, ...) {
 
+     
      plotfunc <- function(i) {
-          if (i == 1 && makeplot) plot(1:ncol(mat), mat[paths[i],], type = type, col = ifelse(is.null(col),i,col), ylim = ylim, ...)   
-          else lines(1:ncol(mat), mat[paths[i],], type = type, col = ifelse(is.null(col),i,col))
+          if (i == 1 && makeplot) plot(xvalues, mat[paths[i],], type = type, col = ifelse(is.null(col),i,col), ylim = ylim, ...)   
+          else lines(xvalues, mat[paths[i],], type = type, col = ifelse(is.null(col),i,col))
      }
      
      noreturn <- sapply(1:length(paths), plotfunc)

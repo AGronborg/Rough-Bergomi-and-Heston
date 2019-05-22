@@ -20,6 +20,11 @@ simulate.simulateclass <- function(simclass) return(simclass)
 simtime <- function(object, ...) UseMethod("simtime", object)
 simtime.simulateclass <- function(simclass, units = "auto", digits = 0) gettime(simclass$siminfo, units, digits)
 
+simidentity <- function(simclass, ...) {
+     simclass$siminfo$starttime <- simclass$siminfo$endtime <- Sys.time()
+     return(simclass)
+}
+
 #####################
 ##### PROCESSES #####
 #####################

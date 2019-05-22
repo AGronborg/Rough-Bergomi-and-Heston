@@ -116,6 +116,18 @@ bsinv <- function(P, Fwd, K, TT, o = "call") {
 }
 vec_bsinv <- Vectorize(bsinv)
 
+##### strikes and deltas #####
+delta_put <- function(k,v,S0 = 1) {
+     d1 <- (log(S0)-k) / v + 0.5 * v
+     pnorm(-d1)
+}
+
+delta_call <- function(k,v,S0 = 1) {
+     d1 <- (log(S0)-k) / v + 0.5 * v
+     pnorm(d1)
+}
+
+
 ##################
 ##### XTABLE #####
 ##################

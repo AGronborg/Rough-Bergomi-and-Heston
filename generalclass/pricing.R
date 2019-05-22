@@ -45,16 +45,21 @@ price_standard <- function(simclass) {
      return(simclass)
 }
 
-fastprice <- function(simclass, t, k, n = NULL, N = NULL, varnames = NULL, values = NULL, simfunc = simulate, pricefunc = price, pricetype = c("impvol","price"), seed = -1, ...) {
+fastprice <- function(simclass, t = NULL, k = NULL, n = NULL, N = NULL, varnames = NULL, values = NULL, simfunc = simulate, pricefunc = price, pricetype = c("volgrid", "impvol","price"), seed = -1, ...) {
      if (is.null(n) && !is.null(timegrid)) n <- simclass$n
      else if (is.null(n)) n <- simclass$timegrid$n
+     
+     if (is.null(N)) N <- simclass$N
+     if (is.null(t)) t <- simclass$simgrid$t
+     if (is.null(k)) k <- simclass$simgrid$k
      
      simclass <- setvars(simclass, names = varnames, values = values, N = N, seed = seed, ...)
      simclass <- changetimegrid(simclass, TT = max(t), n = n, reset = TRUE)
      simclass <- setsimgrid(simclass, t = t, k = k)
      simclass <- simfunc(simclass)
      simclass <- pricefunc(simclass)
-     if (match.arg(pricetype) == "impvol") return(simclass$simgrid$impvol)
+     if (match.arg(pricetype) == "volgrid") return(simclass$simgrid)
+     else if (match.arg(pricetype) == "impvol") return(simclass$simgrid$impvol)
      else if (match.arg(pricetype) == "price") {
           if (!is.null(simclass$simgrid$prices)) return(simclass$simgrid$prices)
           else return(getprices(simclass$simgrid))
@@ -73,4 +78,31 @@ pricetime.simulateclass <- function(simclass, units = "auto", digits = 0) gettim
 simpricetime <- function(object, ...) UseMethod("simpricetime")
 simpricetime.simulateclass <- function(simclass, units = "auto", digits = 0) {
      gettime(simclass$siminfo, units, digits) + gettime(simclass$priceinfo, units, digits)
+}
+
+priceidentity <- function(simclass, ...) {
+     simclass$priceinfo$starttime <- simclass$priceinfo$endtime <- Sys.time()
+     return(simclass)
+}
+
+splitprice <- function(simclass, times = 1, sim_func = simulate, price_func = price) {
+     simclass     <- setvars(simclass, seed = -1)
+     simclasslist <- list()
+     
+     t <- simclass$simgrid$t
+     k <- simclass$simgrid$k
+     
+     for (i in 1:times) {
+          print(i)
+          simclass <- sim_func(simclass)
+          simclass <- price_func(simclass)
+          simclass <- deletepaths(simclass)
+          simclasslist[[i]] <- simclass
+     }
+     
+     oldprices <- sapply(simclasslist, function(x) x$simgrid$prices)
+     newprices <- apply(oldprices, 1, mean)
+     newvols   <- vec_bsinv(P = newprices, Fwd = 1, K = exp(k), TT = t)
+     grid      <- volatilitygrid(t = t, k = k, impvol = matrix(newvols, ncol = 1), prices = matrix(newprices, ncol = 1))
+     return(grid)
 }

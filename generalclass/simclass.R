@@ -15,7 +15,7 @@ source("generalclass/calibrate.R")
 ###############
 ### CLASSES ###
 ###############
-simulateclass <- function(n = 100, N = 1000, TT = NULL, seed = 0) {
+simulateclass <- function(n = 100, N = 1000, TT = NULL, seed = -1) {
      
      simclass <- list(timegrid     = NULL,
                       N            = N,
@@ -172,19 +172,34 @@ summary.simulateclass <- function(simclass, info = 0) {
 
 getvars <- function(object, ...) UseMethod("getvars", object)
 
-getvars.simulateclass <- function(simclass, varnames = NULL, digits = NULL) {
+getvars.simulateclass <- function(simclass, varnames = NULL, digits = NULL, calinfo = FALSE, fortable = FALSE) {
      vars <- matrix(as.numeric(simclass$vars), nrow = 1)
      colnames(vars) <- names(simclass$vars)
+     
      if (is.null(varnames)) varnames <- names(simclass$vars)
+     vars <- vars[,varnames, drop = FALSE]
+     
+     if (calinfo) {
+          vars <- cbind(vars, caltime(simclass), simclass$calinfo$op$value, sum(simclass$calweights > 0), simclass$calinfo$op$value*sum(simclass$calweights > 0))
+          colnames(vars) <- c(varnames, "sim time (secs)", "sse", "cal points","sse * cal points")
+          # vars <- cbind(vars, caltime(simclass), simclass$calinfo$op$value, sum(simclass$calweights > 0), simclass$calinfo$op$value/sum(simclass$calweights > 0))
+          # colnames(vars) <- c(varnames, "sim time (secs)", "sse", "cal points","average se")
+     }
+     
      if (!is.null(digits)) vars <- round(vars, digits = digits)
-     vars[,varnames]
+     if (fortable) {
+          table <- as.data.frame(vars)
+          rownames(table) <- ""
+          return(table)
+     }
+     return(vars)
 }
 
 ########################
 ##### BENCHMARKING #####
 ########################
 
-benchmodel <- function(simclass, t = 1, k = 0, n = NULL, times = 10, simfunc = simulate, pricefunc = price, ...) {
+benchmodel <- function(simclass, t = 1, k = 0, n = NULL, times = 10, unit = c("secs", "millisecs", "microsecs", "nanosecs"), simfunc = simulate, pricefunc = price, ...) {
      if (is.null(n) && is.null(simclass$timegrid)) n <- simclass$n
      else if(is.null(n)) n <- simclass$timegrid$n
      
@@ -197,7 +212,8 @@ benchmodel <- function(simclass, t = 1, k = 0, n = NULL, times = 10, simfunc = s
           simclass <- pricefunc(simclass)
      }
      
-     mean(microbenchmark(benchf(), times = times)$time)/10^9
+     unitscaling <- switch(match.arg(unit), "secs" = 9, "millisecs" = 6, "microsecs" = 3, "nanosecs" = 0)
+     mean(microbenchmark(benchf(), times = times)$time)/10^unitscaling # time in seconds
 }
 
 ################
@@ -232,8 +248,12 @@ plot.simulateclass <- function(simclass, style = c("default","both","simulation"
           if (mfrow) par(mfrow = getmfrow(length(t)))
           
           for (i in 1:length(t)) {
-               plot(x = k, y = empvol[,i], ylim = c(min(empvol,simvol),max(empvol,simvol)), xlab = "k", ylab = "impvol", main = paste("T = ", t[i]))
-               lines(x = k, y = simvol[,i], col = 2)
+               y <- simvol[,i]
+               y <- y[which(y > 0.00001)]
+               x <- k[which(y > 0.00001)]
+               
+               plot(x = k, y = empvol[,i], ylim = c(min(empvol,simvol[simvol > 0.00001]),max(empvol,simvol)), xlab = "k", ylab = "impvol", main = paste("T = ", round(t[i],3)))
+               lines(x = x, y = y, col = 2)
           }
           
      } else if (style == "simulation") {

@@ -8,7 +8,7 @@ library(MASS)   # mvrnorm
 ##### SIMULATE HESTONCLASS #####
 ################################
 
-simulate_heston <- function(hclass) {
+simulate_heston <- function(hclass, scheme = 2) {
      
      hclass$siminfo$starttime <- Sys.time()
      hclass <- setseed(hclass)
@@ -24,7 +24,7 @@ simulate_heston <- function(hclass) {
      rho    <- hclass$vars$rho
      
      dW <- hfdW_rhocor(dt,rho,N,s)
-     V  <- hfV(dW[,,2], dt, lambda, vbar, v0, eta, scheme = 2)
+     V  <- hfV(dW[,,2], dt, lambda, vbar, v0, eta, scheme)
      S  <- hfS(dW[,,1], V, dt)
      
 

@@ -54,7 +54,10 @@ simulate_rb <- function(rbclass, skip = "", antithetic = FALSE, exact = FALSE, k
           rbclass$paths$dB <- t(diff(t(joint$bm)))
           rbclass$paths$V  <- fV(rbclass$paths$Y, t, a, xi, eta)
      }
-     if (!("S"  %in% skip)) rbclass$paths$S   <- fS(rbclass$paths$V, rbclass$paths$dB, dt) 
+     if (!("S"  %in% skip)) {
+          rbclass$paths$S   <- fS(rbclass$paths$V[1:N,], rbclass$paths$dB, dt) 
+          if (antithetic) rbclass$paths$S <- rbind(rbclass$paths$S, fS(rbclass$paths$V[(N+1):(2*N),], -rbclass$paths$dB, dt) )
+     }
      
      rbclass$siminfo$endtime <- Sys.time()
      return(rbclass)
@@ -281,7 +284,8 @@ covmat_fbm <- function(H, n, TT = 1) {
      return(Sigma)
 }
 
-sim_fbm <- function(H, n, TT = 1, N = 1) {
+sim_fbm <- function(H, n, TT = 1, N = 1, simseed = -1) {
+     if (simseed != -1) set.seed(simseed)
      s     <- ceiling(n*TT)
      
      Sigma <- covmat_fbm(H,n,TT)

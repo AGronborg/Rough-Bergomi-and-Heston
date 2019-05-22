@@ -94,7 +94,9 @@ plot.volatilitygrid <- function(volgrid, t = NULL, plot3d = FALSE, ...) {
      else volgrid_multiplot(volgrid, t, ...)
 }
 
-volgrid_multiplot <- function(volgrid, t = NULL, mfrow = TRUE, pricetype = c("impvol","prices"), ...) {
+volgrid_multiplot <- function(volgrid, t = NULL, mfrow = TRUE, pricetype = c("impvol","prices"), mar = NULL, ...) {
+     
+     if (!is.null(mar)) par(mar = mar)
      
      if (match.arg(pricetype) == "prices") {
                if (is.null(volgrid$prices)) volgrid$prices <- getprices(volgrid)
@@ -106,10 +108,15 @@ volgrid_multiplot <- function(volgrid, t = NULL, mfrow = TRUE, pricetype = c("im
      else s <- 1:length(volgrid$t)
      
      if (mfrow) par(mfrow = getmfrow(length(s)))
-     for (i in s) plot(x = volgrid$k, y = volgrid$impvol[,i], xlab = "k", ylab = "impvol", main = paste("T = ", volgrid$t[i]), ...)
+     for (i in s) {
+          y <- volgrid$impvol[,i]
+          y <- y[which(y > 0.00001)]
+          x <- volgrid$k[which(y > 0.00001)]
+          plot(x = x, y = y, xlab = "k", ylab = "impvol", main = paste("T = ", round(volgrid$t[i],3)), ...)
+     }
 }
 
-plotmultiplevolgrids <- function(volgridlist, mfrow = TRUE, pricetype = c("impvol","prices")) {
+plotmultiplevolgrids <- function(volgridlist, mfrow = TRUE, pricetype = c("impvol","prices"), newmain = NULL, y_min = NULL, y_max = NULL, lwd = 1, ...) {
      
      if (match.arg(pricetype) == "prices") {
           for (i in 1:length(volgridlist)) {
@@ -124,6 +131,9 @@ plotmultiplevolgrids <- function(volgridlist, mfrow = TRUE, pricetype = c("impvo
      ymin <- apply(as.matrix(sapply(volgridlist, function(volgrid) apply(volgrid$impvol, 2, min))), 1, min)
      ymax <- apply(as.matrix(sapply(volgridlist, function(volgrid) apply(volgrid$impvol, 2, max))), 1, max)
      
+     if (!is.null(y_min)) ymin <- y_min
+     if (!is.null(y_max)) ymax <- y_max
+     
      t <- volgridlist[[1]]$t
      s <- 1:length(t)
      
@@ -132,11 +142,20 @@ plotmultiplevolgrids <- function(volgridlist, mfrow = TRUE, pricetype = c("impvo
           first <- TRUE
           gridnum   <- 1
           for (volgrid in volgridlist) {
-               if (first) plot(x = volgrid$k, y = volgrid$impvol[,i], 
+               y <- volgrid$impvol[,i]
+               y <- y[which(y > 0.00001)]
+               x <- volgrid$k[which(y > 0.00001)]
+               
+               if (first) {
+                    main <- paste("T = ", round(volgrid$t[i],3))
+                    if (!is.null(newmain)) main <- newmain
+                    plot(x = x, y = y, 
                                type = "l", xlab = "k", ylab = "impvol",
                                xlim = c(xmin,xmax), ylim = c(ymin[i],ymax[i]),
-                               main = paste("T = ", volgrid$t[i]))
-               else lines(x = volgrid$k, y = volgrid$impvol[,i], col = gridnum)
+                               main = main, lwd = lwd, ...)
+               } else {
+                    lines(x = x, y = y, col = gridnum, lwd = lwd)
+               }
                gridnum <- gridnum + 1
                first   <- FALSE
           }

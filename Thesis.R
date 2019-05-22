@@ -43,14 +43,14 @@ plot(hclass)
 pricerb(t = 0.25, k = c(-0.1787,0.0000,0.1041), a = -0.43, rho = -0.9, eta = 1.9, xi = 0.235^2)
 
 ### ROUGH BERGOMI (MIXED) ###
-rbclass <- roughbergomiclass(n = 1000, N = 10000, a = -0.43, rho = -0.90, eta = 1.9, xi = 0.235^2)
+rbclass <- roughbergomiclass(n = 1000, N = 1000, a = -0.43, rho = -0.90, eta = 1.9, xi = 0.235^2)
 rbclass <- setsimgrid(rbclass, loaddate()$volgrid$t, loaddate()$volgrid$k)
 rbclass <- simulate_rb_antimixed(rbclass)
-rbclass <- price_rb_mixed(rbclass)
+rbclass <- price_rb_mixed(rbclass, estimator = "controlled")
 
 simpricetime(rbclass)
 plot(rbclass)
-plot(rbclass$paths, variables = c("V","S1") , paths = c(1,5001))
+plot(rbclass$paths, variables = c("V","S1") , paths = c(1,501))
 
 ######################$
 ##### CALIBRATION #####
