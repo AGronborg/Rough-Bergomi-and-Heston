@@ -190,13 +190,13 @@ multiplot_calovertime_1t <- function(cotclasslist, t, withempirical = TRUE, mfro
                     plot(x = cotclass$simclasses[[1]]$empgrid$k, y = y, 
                                type = "p", xlab = "k", ylab = "impvol", col = gridnum,
                                ylim = c(min(ymin[i],y),max(ymax[i],y)), #xlim = c(xmin,xmax), 
-                               main = paste(cotclass$dates[[i]]$date, " (T = ", volgrid$t[s], ")", sep = ""))
+                               main = paste(cotclass$dates[[i]]$date, " (T = ", round(volgrid$t[s],2), ")", sep = ""))
                }
                
                if (first && !withempirical) plot(x = volgrid$k, y = volgrid$impvol[,s], 
                                    type = "l", xlab = "k", ylab = "impvol", col = gridnum,
                                    ylim = c(ymin[i],ymax[i]), #xlim = c(xmin,xmax), 
-                                   main = paste(cotclass$dates[[i]]$date, " (T = ", volgrid$t[s], ")", sep = ""))
+                                   main = paste(cotclass$dates[[i]]$date, " (T = ", round(volgrid$t[s],2), ")", sep = ""))
                else lines(x = volgrid$k, y = volgrid$impvol[,s], col = gridnum)
                gridnum <- gridnum + 1
                first   <- FALSE
@@ -231,7 +231,7 @@ multiplot_calovertime_mt <- function(cotclasslist, t = NULL, withempirical = TRU
                     #if (j == 1) main <- paste(cotclass$dates[[i]]$date, " (T = ", volgrid$t[s[j]], ")")
                     #else main <- "" 
                     
-                    main <- paste(cotclass$dates[[i]]$date, " (T = ", volgrid$t[s[j]], ")")
+                    main <- paste(cotclass$dates[[i]]$date, " (T = ", round(volgrid$t[s[j]],2), ")")
                     
                     if (first && withempirical) {
                          y <- cotclass$simclasses[[i]]$empgrid$impvol[,s[j]]

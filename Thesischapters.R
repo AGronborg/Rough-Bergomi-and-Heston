@@ -72,7 +72,7 @@ xtable(table, digits = 3)
 H <- c(0.1,0.3,0.5,0.7,0.9,0.95)
 paths <- lapply(H, sim_fbm, n = 500, TT = 1, N = 1, simseed = 123)
 
-pdf("../Thesis LaTeX/Images/cht4_plot1.pdf")
+pdf("Images/cht4_plot1.pdf")
 par(mfrow = c(3,2), mar = c(2.5,2.5,1,1))
 lapply(paths, plot, x = 0:500/500, type = "l", xlab = "", ylab = "")
 dev.off()
@@ -81,7 +81,7 @@ dev.off()
 path1 <- sim_fbm(H = 0.3, n = 500, TT = 1,  N = 1, simseed = 123)
 path2 <- sim_fbm(H = 0.3, n = 50, TT = 10, N = 1, simseed = 123)
 
-pdf("../Thesis LaTeX/Images/cht4_plot2.pdf")
+pdf("Images/cht4_plot2.pdf")
 par(mfrow = c(1,1), mar = c(2.5,2.5,1,1))
 plot(seq(0,10,length.out = 501), path1*10^0.3, type = "l", lwd = 3)
 lines(seq(0,10,length.out = 501), path2, col = 2, lwd = 1)
@@ -100,7 +100,7 @@ incre1 <- apply(paths, 1, function(x) x[251]-x[1])
 incre2 <- apply(paths, 1, function(x) x[501]-x[251])
 
 x <- seq(-3,3, length.out = 100)
-pdf("../Thesis LaTeX/Images/cht4_plot3.pdf")
+pdf("Images/cht4_plot3.pdf")
 plot(x, dnorm(x), type = "l", ylab = "density")
 lines(density(incre1)$x, density(incre1)$y, col = 2)
 lines(density(incre2)$x, density(incre2)$y, col = 3)
@@ -135,22 +135,61 @@ rbclass1 <- roughbergomiclass(n = 2000, N = 20000, a = -0.43, rho = -0.90, eta =
 rbclass1 <- setsimgrid(rbclass1, t = 0.25, k = k)
 grid1    <- splitprice(rbclass1, times = 50, sim_func = function(x) simulate_rb_exact(x))
 
-save(grid1, file = "data/cht5_exact1.RData")
+# save(grid1, file = "data/cht5_exact1.RData")
 
 # t = 1
 rbclass2 <- roughbergomiclass(n = 500, N = 20000, a = -0.43, rho = -0.90, eta = 1.9, xi = 0.235^2, seed = -1)
 rbclass2 <- setsimgrid(rbclass2, t = 1, k = k)
 grid2    <- splitprice(rbclass2, times = 50, sim_func = function(x) simulate_rb_exact(x))
 
-save(grid2, file = "data/cht5_exact2.RData")
+# save(grid2, file = "data/cht5_exact2.RData")
+
+# Covariance
+set.seed(123)
+paths <- sim_volterra(H = 0.3, n = 250, TT = 2, N = 50000)
+cov(paths[,251],paths[,501])
+var(paths[,251])
+var(paths[,501])
+2^(2*0.3)
+
+
+a <- -0.2; s <- 1; t<- 2;
+as.numeric( (2*a+1)/(a+1)*s^(a+1)*t^(a)*hypergeo(1,-a,a+2,s/t) )
+
+# Example paths
+rbclass <- roughbergomiclass(n = 300, N = 2, a = -0.43, rho = -0.90, eta = 1.9, xi = 0.235^2, seed = 123)
+rbclass <- setsimgrid(rbclass, t = 1, k = 0)
+rbclass <- simulate_rb_exact(rbclass, skip = "")
+
+paths   <- rbclass$paths
+
 
 ##### PLOTS #####
-pdf("../Thesis LaTeX/Images/cht5_plot1.pdf")
+pdf("Images/cht5_plot1.pdf")
 plot(grid1, type = "l", mar = c(4.5,4.5,2,2))
 dev.off()
 
-pdf("../Thesis LaTeX/Images/cht5_plot2.pdf")
+pdf("Images/cht5_plot2.pdf")
 plot(grid2, type = "l", mar = c(4.5,4.5,2,2))
+dev.off()
+
+str(rbclass$paths)
+n  <- 300; t <- seq(0,1, length.out = n + 1)
+W1     <- cumsum(c(0,paths$dW11[1,]))
+W2     <- cumsum(c(0,paths$dW2[1,]))
+Z      <- -0.9*W1 + sqrt(1-(-0.9)^2)*W2
+Wtilde <- paths$Y[1,]
+v      <- paths$V[1,]
+S      <- paths$S[1,]
+
+pdf("Images/cht5_plot3.pdf")
+par(mfrow = c(3,2), mar = c(4.5,4.5,2,2))
+plot(x = t, y = W1, type = "l", main = expression(paste(W^1)), xlab = "t", ylab = "")
+plot(x = t, y = W2, type = "l", main = expression(paste(W^2)), xlab = "t", ylab = "")
+plot(x = t, y = Z,  type = "l", main = expression(paste(Z)), xlab = "t", ylab = "")
+plot(x = t, y = Wtilde,  type = "l", main = expression(paste(tilde(W))), xlab = "t", ylab = "")
+plot(x = t, y = v,  type = "l", main = expression(paste(v)), xlab = "t", ylab = "")
+plot(x = t, y = S,  type = "l", main = expression(paste(S)), xlab = "t", ylab = "")
 dev.off()
 
 ####################################$
@@ -196,11 +235,11 @@ grid13     <- splitprice(rbclass, times = 50, sim_func = function(x) simulate_rb
 grid14     <- splitprice(rbclass, times = 50, sim_func = function(x) simulate_rb_standard(x, kappa = 1, b = "optimal"))
 grid15     <- splitprice(rbclass, times = 50, sim_func = function(x) simulate_rb_standard(x, kappa = 3, b = "optimal"))
 
-save(grid11, file = "data/cht6_hybrid11.RData")
-save(grid12, file = "data/cht6_hybrid12.RData")
-save(grid13, file = "data/cht6_hybrid13.RData")
-save(grid14, file = "data/cht6_hybrid14.RData")
-save(grid15, file = "data/cht6_hybrid15.RData")
+# save(grid11, file = "data/cht6_hybrid11.RData")
+# save(grid12, file = "data/cht6_hybrid12.RData")
+# save(grid13, file = "data/cht6_hybrid13.RData")
+# save(grid14, file = "data/cht6_hybrid14.RData")
+# save(grid15, file = "data/cht6_hybrid15.RData")
 
 # t = 1
 rbclass   <- roughbergomiclass(n = 500, N = 20000, a = -0.43, rho = -0.90, eta = 1.9, xi = 0.235^2, seed = -1)
@@ -213,11 +252,11 @@ grid23     <- splitprice(rbclass, times = 50, sim_func = function(x) simulate_rb
 grid24     <- splitprice(rbclass, times = 50, sim_func = function(x) simulate_rb_standard(x, kappa = 1, b = "optimal"))
 grid25     <- splitprice(rbclass, times = 50, sim_func = function(x) simulate_rb_standard(x, kappa = 3, b = "optimal"))
 
-save(grid21, file = "data/cht6_hybrid21.RData")
-save(grid22, file = "data/cht6_hybrid22.RData")
-save(grid23, file = "data/cht6_hybrid23.RData")
-save(grid24, file = "data/cht6_hybrid24.RData")
-save(grid25, file = "data/cht6_hybrid25.RData")
+# save(grid21, file = "data/cht6_hybrid21.RData")
+# save(grid22, file = "data/cht6_hybrid22.RData")
+# save(grid23, file = "data/cht6_hybrid23.RData")
+# save(grid24, file = "data/cht6_hybrid24.RData")
+# save(grid25, file = "data/cht6_hybrid25.RData")
 
 ##### TABLES #####
 gridlist  <- list(grid11, grid12, grid13, grid14, grid15)
@@ -226,7 +265,7 @@ relerrors <- sapply(gridlist, function(x) abs(x$impvol - grid11$impvol)/grid11$i
 
 colnames(relerrors) <- c("exact", "fwd, kappa = 0", "optimal, kappa = 0", "optimal, kappa = 1", "optimal, kappa = 3")
 rownames(relerrors) <- round(k, 2)
-xtable(relerrors*100, digits = 3)
+xtable(relerrors*100, digits = 2)
 
 gridlist  <- list(grid21, grid22, grid23, grid24, grid25)
 errors    <- sapply(gridlist, function(x) abs(x$impvol - grid21$impvol))
@@ -234,16 +273,16 @@ relerrors <- sapply(gridlist, function(x) abs(x$impvol - grid21$impvol)/grid21$i
 
 colnames(relerrors) <- c("exact", "fwd, kappa = 0", "optimal, kappa = 0", "optimal, kappa = 1", "optimal, kappa = 3")
 rownames(relerrors) <- k
-xtable(relerrors*100, digits = 3)
+xtable(relerrors*100, digits = 2)
 
 ##### PLOTS #####
-pdf("../Thesis LaTeX/Images/cht6_plot1.pdf")
+pdf("Images/cht6_plot1.pdf")
 par(mfrow = c(2,1), mar = c(4.5,4.5,2,2))
 plotmultiplevolgrids(list(grid11, grid12, grid13, grid14, grid15), pricetype = "impvol", mfrow = FALSE, y_min = 0, lwd = 2)
 plotmultiplevolgrids(list(grid21, grid22, grid23, grid24, grid25), pricetype = "impvol", mfrow = FALSE, y_min = 0, lwd = 2)
 dev.off()
 
-pdf("../Thesis LaTeX/Images/cht6_plot2.pdf")
+pdf("Images/cht6_plot2.pdf")
 par(mfrow = c(2,1), mar = c(4.5,4.5,2,2))
 plotmultiplevolgrids(list(grid11, grid12, grid13, grid14, grid15), pricetype = "prices", mfrow = FALSE, y_min = 0)
 plotmultiplevolgrids(list(grid21, grid22, grid23, grid24, grid25), pricetype = "prices", mfrow = FALSE, y_min = 0)
@@ -299,78 +338,6 @@ colnames(table) <- n
 
 xtable(table*10^3, align = "r|rrrrrrrrrr", digits = 3)
 
-#########################################$
-##### CHAPTER 7 - VARIANCE REDUCTION #####
-#########################################$
-
-### ANTITHETIC PATHS###
-rbclass   <- roughbergomiclass(n = 312, N = 2000, a = -0.43, rho = -0.90, eta = 1.9, xi = 0.235^2, seed = 123)
-rbclass   <- setsimgrid(rbclass, t = 1, k = 0)
-rbclass   <- simulate_rb(rbclass, antithetic = TRUE)
-rbclass   <- rb_add_antithetic_paths(rbclass)
-
-cor(rbclass$paths$S[1:1000,313],rbclass$paths$S[1001:2000,313])
-
-##### CONVERGENCE (n) #####
-
-# For 3 strikes
-rb <- roughbergomiclass(N = 200000, a = -0.43, rho = -0.90, eta = 1.9, xi = 0.235^2, seed = 123)
-simulate.roughbergomiclass  <- function(...) simulate_rb_antimixed(...)
-price.roughbergomiclass     <- function(...) price_rb_mixed(...)
-
-strikes <- c(-0.1787, 0, 0.1041)
-x <- c(1:10 * 40, 6:16 * 80)
-y <- sapply(x, function (n) {print(n); fastprice(rb, t = 0.25, k = strikes, n = n, pricetype = "impvol", seed = 123)} )
-
-# save(strikes, x, y, file = "data/cht7_converge_n.RData")
-load(file = "data/cht7_converge_n.RData")
-
-# Absolute error
-conf <- 1/sqrt(200) * c(0.0055,0.0027,0.0026) * qnorm(0.975) # 95% confidence interval (error)
-
-pdf("../Thesis LaTeX/Images/cht7_plot1.pdf")
-par(mfrow=c(1,1))
-plot( x/4, abs(y[1,]-0.2961), type = "l", col = 1, ylim = c(0,0.02), xlab = "time steps", ylab = "absolute error")
-lines(x/4, abs(y[2,]-0.2061), type = "l", col = 2)
-lines(x/4, abs(y[3,]-0.1576), type = "l", col = 3)
-abline(h = conf[1:3], col = 1:3, lwd = 2)
-dev.off()
-
-# Relative error
-conf <- 1/sqrt(200) * c(0.0055,0.0027,0.0026) * qnorm(0.975) / c(0.2961,0.2061,0.1576) * 100 # 95% confidence interval (error)
-
-pdf("../Thesis LaTeX/Images/cht7_plot2.pdf")
-par(mfrow=c(1,1))
-plot( x/4, abs(y[1,]-0.2961)/0.2961*100, type = "l", col = 1, ylim = c(0,4), xlab = "time steps", ylab = "relative absolute error")
-lines(x/4, abs(y[2,]-0.2061)/0.2061*100, type = "l", col = 2)
-lines(x/4, abs(y[3,]-0.1576)/0.1576*100, type = "l", col = 3)
-abline(h = conf[1:3], col = 1:3, lwd = 2)
-dev.off()
-
-# For the whole smiles
-rb <- roughbergomiclass(N = 200000, a = -0.43, rho = -0.90, eta = 1.9, xi = 0.235^2, seed = 123)
-simulate.roughbergomiclass  <- function(...) simulate_rb_antimixed(...)
-price.roughbergomiclass     <- function(...) price_rb_mixed(...)
-
-strikes <- empirical$volgrid$k
-x <- c(1:10 * 40, 6:16 * 80)
-y <- sapply(x, function (n) {print(n); fastprice(rb, t = 0.25, k = strikes, n = n, pricetype = "impvol", seed = 123)} )
-
-#save(strikes, x, y, file = "data/cht7_converge_n_whole_smile.RData")
-load(file = "data/cht7_converge_n_whole_smile.RData")
-
-# Normal plot
-plot(x*0.25, y[1,] - mean(y[1,]), type = "l", ylim = c(-0.05,0.05))
-for(i in 2:nrow(y)) {
-     lines(x*0.25, y[i,] - mean(y[i,]), col = i)
-}
-
-# Adjusted plot
-plot(x*0.25, y[1,] - mean(y[1,]), type = "l", ylim = c(-0.005,0.05))
-for(i in 2:nrow(y)) {
-     lines(x*0.25, y[i,] - y[i,ncol(y)], col = i)
-}
-
 ##################################$
 ##### CHAPTER 8 - CALIBRATION #####
 ##################################$
@@ -385,32 +352,41 @@ price.hestonclass       <- function(...) price_heston_closedform_lipton(...)
 heston <- setempgrid(heston, data)
 heston <- calibrate(heston, lambda = 1.15, vbar = 0.04, v0 = 0.04, eta = 0.39, rho = 0)
 
+# save(heston, file = "data/cht8_heston.RData")
+# load(file= "data/cht8_heston.RData")
+
 # Table
 getvars(heston, digits = 3, calinfo = TRUE)
 xtable(getvars(heston, fortable = TRUE, calinfo = TRUE), digits = 3)
 
 # Plot
-pdf("../Thesis LaTeX/Images/cht8_plot1.pdf")
+pdf("Images/cht8_plot1.pdf")
 par(mar=c(2.3,2,1,1))
 plot(heston, ylim = c(0,0.4)) 
 dev.off()
 
 ##### ROUGH BERGOMI #####
 data                       <- loaddate(date = "2009-07-31")
-data                       <- subset(data, t = data$volgrid$t[-c(1,2)])
-rb                         <- roughbergomiclass(n = 312*4, N = 1000, seed = 123)
+data                       <- subset(data, t = data$volgrid$t[3:14])
+rb                         <- roughbergomiclass(n = 312*4, N = 10000, seed = 123)
 simulate.roughbergomiclass  <- function(...) simulate_rb_antimixed(...)
 price.roughbergomiclass     <- function(...) price_rb_mixed(...)
+calibrate.roughbergomiclass <- function(...) calibrate_rb_mixed(...)
 
 rb   <- setempgrid(rb, data)
 rb   <- calibrate_rb_mixed(rb, a = -0.43, rho = -0.90, eta = 1.9, xi = 0.235^2, control = list(maxit = 20, trace = 1, REPORT = 1), trackpars = TRUE)
+
+# save(rb, file = "data/cht8_rb1000.RData")
+# save(rb, file = "data/cht8_rb10000.RData")
+# save(rb, file = "data/cht8_rb10000_3.RData")
+# load(file = "data/cht8_rb10000_3.RData")
 
 # Table
 getvars(rb, digits = 3, calinfo = TRUE)
 xtable( getvars(rb, fortable = TRUE, calinfo = TRUE) , digits = 3)
 
 # Plot
-pdf("../Thesis LaTeX/Images/cht8_plot2.pdf")
+pdf("Images/cht8_plot2.pdf")
 par(mar=c(2.3,2,1,1))
 plot(rb) 
 dev.off()
@@ -418,7 +394,7 @@ dev.off()
 ##### COMPARISON #####
 
 # Plot
-pdf("../Thesis LaTeX/Images/cht8_plot3.pdf")
+pdf("Images/cht8_plot3.pdf")
 par(mar=c(2.3,2,1,1))
 plotmultiplevolgrids(list(class0 = data$volgrid, class1 = heston$simgrid, class2 = rb$simgrid)) 
 dev.off()
@@ -445,15 +421,18 @@ hestoncot  <- calibrate_first(hestoncot, lambda = 1.15, vbar = 0.04, v0 = 0.04, 
 hestoncot  <- setvars_tofirst(hestoncot)
 hestoncot  <- calibrate(hestoncot, v0 = hestoncot$simclasses[[1]]$vars$v0, eta = hestoncot$simclasses[[1]]$vars$eta, skipfirst = TRUE)
 
+# save(hestoncot, file="data/cht9_hestoncot.RData")
+# load("data/cht9_hestoncot.RData")
+
 # Tables
 getvars(hestoncot)
 xtable(getvars(hestoncot))
 
 summary(hestoncot)
-xtable(summary(hestoncot))
+xtable(summary(hestoncot), digits=3)
 
 # Plots
-pdf("../Thesis LaTeX/Images/cht9_plot1.pdf")
+pdf("Images/cht9_plot1.pdf")
 par(mar=c(2.3,2,1,1))
 plot(hestoncot)
 dev.off()
@@ -461,7 +440,7 @@ dev.off()
 ### ROUGH BERGOMI ###
 
 # Calibration
-rbcls  <- roughbergomiclass(n = 312*4, N = 1000, seed = 123)
+rbcls  <- roughbergomiclass(n = 312*4, N = 10000, seed = 123)
 simulate.roughbergomiclass  <- function(...) simulate_rb_antimixed(...)
 price.roughbergomiclass     <- function(...) price_rb_mixed(...)
 calibrate.roughbergomiclass <- function(...) calibrate_rb_mixed(...)
@@ -471,15 +450,18 @@ rbcot  <- calibrate_first(rbcot, a = -0.43, rho = -0.90, eta = 1.9, xi = 0.235^2
 rbcot  <- setvars_tofirst(rbcot)
 rbcot  <- calibrate(rbcot, xi = rbcot$simclasses[[1]]$vars$xi, eta = rbcot$simclasses[[1]]$vars$eta, skipfirst = TRUE, control = list(maxit = 20, trace = 1, REPORT = 1), trackpars = TRUE)
 
+# save(rbcot, file="data/cht9_rbcot2.RData")
+# load(file="data/cht9_rbcot2.RData")
+
 # Tables
 getvars(rbcot)
 xtable(getvars(rbcot))
 
 summary(rbcot)
-xtable(summary(rbcot))
+xtable(summary(rbcot), digits=3)
 
 # Plots
-pdf("../Thesis LaTeX/Images/cht9_plot2.pdf")
+pdf("Images/cht9_plot2.pdf")
 par(mar=c(2.3,2,1,1))
 plot(rbcot)
 dev.off()
